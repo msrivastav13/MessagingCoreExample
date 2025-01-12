@@ -34,6 +34,36 @@
             endingLineNumber = "59"
             landmarkName = "sendTextMessage(message:completion:)"
             landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "73394D85-1BD7-4E11-B507-AB82EBADE32E - 237b7b0785de8496"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "MessagingCoreExample.MessagingViewModel.sendTextMessage(message: Swift.String, completion: (Swift.Bool) -&gt; ()) -&gt; ()"
+                  moduleName = "MessagingCoreExample.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/mohith.shrivastava/Desktop/All%20Files/All%20Items/Projects/messaging-in-app-ios/examples/MessagingCoreExample/Models/MessagingViewModel.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "59"
+                  endingLineNumber = "59">
+               </Location>
+               <Location
+                  uuid = "73394D85-1BD7-4E11-B507-AB82EBADE32E - 5f29b33c2fb71a1e"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #1 @Swift.MainActor () -&gt; () in MessagingCoreExample.MessagingViewModel.sendTextMessage(message: Swift.String, completion: (Swift.Bool) -&gt; ()) -&gt; ()"
+                  moduleName = "MessagingCoreExample.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/mohith.shrivastava/Desktop/All%20Files/All%20Items/Projects/messaging-in-app-ios/examples/MessagingCoreExample/Models/MessagingViewModel.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "60"
+                  endingLineNumber = "60">
+               </Location>
+            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
