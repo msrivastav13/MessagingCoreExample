@@ -19,6 +19,7 @@ struct ContentView: View {
     @State private var showEndChatConfirmation = false
     @ObservedObject var observeableConversationData: ObserveableConversationEntries
     @ObservedObject var viewModel: MessagingViewModel
+    @StateObject private var speechRecognizer = SpeechRecognizer()
 
     init(isChatFeedHidden: Bool = true, messageInputText: String = "") {
         self.isChatFeedHidden = isChatFeedHidden
@@ -235,46 +236,48 @@ struct ContentView: View {
                     }
                 
                 // Message input area
-                VStack(spacing: 12) {
-                    HStack {
-                        TextField("Type a Message", text: $messageInputText)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(Color.white)
-                            .cornerRadius(20)
-                        
-                        Button(action: {
-                            guard !messageInputText.isEmpty else { return }
-                            viewModel.sendTextMessage(message: messageInputText) { success in
-                                DispatchQueue.main.async {
-                                    if success {
-                                        messageInputText = ""
-                                    }
-                                }
-                            }
-                        }) {
-                            Image(systemName: "arrow.up.circle.fill")
-                                .font(.system(size: 32))
-                                .foregroundColor(.white)
-                        }
-                        .disabled(messageInputText.isEmpty)
-                    }
-                    .padding(.horizontal)
-                    
-                    Button(action: {
-                        isChatFeedHidden.toggle()
-                    }) {
-                        Text("Back to Menu")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 12)
-                            .background(Color.white.opacity(0.2))
-                            .clipShape(Capsule())
-                    }
-                    .padding(.bottom, 8)
+               VStack(spacing: 12) {
+    HStack {
+        TextField("Type a Message", text: $messageInputText)
+            .textFieldStyle(RoundedBorderTextFieldStyle())
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(Color.white)
+            .cornerRadius(20)
+        
+        // Voice input button
+        Button(action: {
+            if speechRecognizer.isRecording {
+                speechRecognizer.stopRecording()
+            } else {
+                speechRecognizer.startRecording { recognizedText in
+                    messageInputText = recognizedText
                 }
+            }
+        }) {
+            Image(systemName: speechRecognizer.isRecording ? "stop.circle.fill" : "mic.circle.fill")
+                .font(.system(size: 32))
+                .foregroundColor(speechRecognizer.isRecording ? .red : .white)
+        }
+        
+        Button(action: {
+            guard !messageInputText.isEmpty else { return }
+            viewModel.sendTextMessage(message: messageInputText) { success in
+                DispatchQueue.main.async {
+                    if success {
+                        messageInputText = ""
+                    }
+                }
+            }
+        }) {
+            Image(systemName: "arrow.up.circle.fill")
+                .font(.system(size: 32))
+                .foregroundColor(.white)
+        }
+        .disabled(messageInputText.isEmpty)
+    }
+    .padding(.horizontal)
+}
                 .padding(.vertical, 8)
                 .background(Color(red: 0.45, green: 0.12, blue: 0.38).opacity(0.9))
             }

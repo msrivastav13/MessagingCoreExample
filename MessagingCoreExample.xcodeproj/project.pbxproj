@@ -17,6 +17,7 @@
 		27B2C75C2A30E83300DC6740 /* MessagingCoreExampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27B2C75A2A30E83300DC6740 /* MessagingCoreExampleApp.swift */; };
 		27B2C75D2A30E83300DC6740 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27B2C75B2A30E83300DC6740 /* ContentView.swift */; };
 		27B2C75F2A30E85D00DC6740 /* configFile.json in Resources */ = {isa = PBXBuildFile; fileRef = 27B2C75E2A30E85D00DC6740 /* configFile.json */; };
+		C797A2C42D3444C900E558FD /* SpeechRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C797A2C32D3444C900E558FD /* SpeechRecognizer.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,6 +31,7 @@
 		27B2C75A2A30E83300DC6740 /* MessagingCoreExampleApp.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MessagingCoreExampleApp.swift; sourceTree = "<group>"; };
 		27B2C75B2A30E83300DC6740 /* ContentView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		27B2C75E2A30E85D00DC6740 /* configFile.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = configFile.json; sourceTree = "<group>"; };
+		C797A2C32D3444C900E558FD /* SpeechRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechRecognizer.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -79,6 +81,7 @@
 			isa = PBXGroup;
 			children = (
 				27B2C7572A30E82500DC6740 /* MessagingViewModel.swift */,
+				C797A2C32D3444C900E558FD /* SpeechRecognizer.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -169,6 +172,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				27B2C7552A30E81E00DC6740 /* MessaingViewModel+UserVerifictionDelegate.swift in Sources */,
+				C797A2C42D3444C900E558FD /* SpeechRecognizer.swift in Sources */,
 				27B2C7522A30E81E00DC6740 /* MessagingViewModel+HiddenPreChatDelegate.swift in Sources */,
 				27B2C75D2A30E83300DC6740 /* ContentView.swift in Sources */,
 				27B2C75C2A30E83300DC6740 /* MessagingCoreExampleApp.swift in Sources */,
@@ -323,6 +327,8 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "We need access to your microphone for voice input";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "We need access to speech recognition to convert your voice to text";
 			};
 			name = Debug;
 		};
