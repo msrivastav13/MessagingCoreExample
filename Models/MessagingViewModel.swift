@@ -44,7 +44,9 @@ public class MessagingViewModel: NSObject, ObservableObject, ConversationClientD
             if let messages = messages {
                 DispatchQueue.main.async {
                     self.observeableConversationData?.conversationEntries = []
-                    for message in messages.reversed() {
+                    // Sort messages by timestamp before adding them
+                    let sortedMessages = messages.sorted { $0.timestamp < $1.timestamp }
+                    for message in sortedMessages {
                         self.observeableConversationData?.conversationEntries.append(message)
                     }
                 }

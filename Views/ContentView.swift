@@ -296,8 +296,12 @@ struct ContentView: View {
                         switch message.format {
                         case .textMessage:
                             if let textMessage = message.payload as? TextMessage {
-                                TextMessageCell(text: textMessage.text, role: message.sender.role)
-                                    .id(message.identifier)
+                                TextMessageCell(
+                                    text: textMessage.text,
+                                    role: message.sender.role,
+                                    timestamp: message.timestamp
+                                )
+                                .id(message.identifier)
                             }
                         default:
                             EmptyView()
@@ -319,28 +323,36 @@ struct ContentView: View {
     private struct TextMessageCell: View {
         var text: String
         var role: ParticipantRole
+        var timestamp: Date
         
         var body: some View {
-            HStack {
-                if role == .user {
-                    Spacer()
+            VStack(alignment: role == .user ? .trailing : .leading, spacing: 4) {
+                HStack {
+                    if role == .user {
+                        Spacer()
+                    }
+                    
+                    VStack(alignment: role == .user ? .trailing : .leading, spacing: 4) {
+                        Text(text)
+                            .font(.system(size: 16, weight: .regular))
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 12)
+                            .background(backgroundColor)
+                            .foregroundColor(foregroundColor)
+                            .clipShape(RoundedRectangle(cornerRadius: 20))
+                            .shadow(color: Color.black.opacity(0.1), radius: 3, x: 0, y: 2)
+                        
+                        TimeStampView(date: timestamp)
+                            .padding(.horizontal, 8)
+                    }
+                    
+                    if role != .user {
+                        Spacer()
+                    }
                 }
-                
-                Text(text)
-                    .font(.system(size: 16, weight: .regular))
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .background(backgroundColor)
-                    .foregroundColor(foregroundColor)
-                    .clipShape(RoundedRectangle(cornerRadius: 20))
-                    .shadow(color: Color.black.opacity(0.1), radius: 3, x: 0, y: 2)
-                
-                if role != .user {
-                    Spacer()
-                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 4)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 4)
         }
         
         private var backgroundColor: Color {
@@ -361,6 +373,30 @@ struct ContentView: View {
             default:
                 return Color.black.opacity(0.85)
             }
+        }
+    }
+
+    struct TimeStampView: View {
+        let date: Date
+        
+        var body: some View {
+            Text(formatTimestamp(date))
+                .font(.system(size: 12))
+                .foregroundColor(.white)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 2)
+                .background(Color.black.opacity(0.2))
+                .cornerRadius(10)
+        }
+        
+        private func formatTimestamp(_ date: Date) -> String {
+            let formatter = DateFormatter()
+            if Calendar.current.isDateInToday(date) {
+                formatter.dateFormat = "h:mm a"
+            } else {
+                formatter.dateFormat = "MMM d, h:mm a"
+            }
+            return formatter.string(from: date)
         }
     }
 }
