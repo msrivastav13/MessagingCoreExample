@@ -113,8 +113,9 @@ struct ContentView: View {
         }
         .overlay(
             Group {
-                if viewModel.isLoading {
-                    LoadingOverlay()
+                if viewModel.shouldShowLoading {
+                    LoadingOverlay(conversationState: viewModel.conversationState)
+                        .zIndex(100)
                 }
             }
         )
@@ -264,6 +265,7 @@ struct ContentView: View {
             guard !messageInputText.isEmpty else { return }
             viewModel.sendTextMessage(message: messageInputText) { success in
                 DispatchQueue.main.async {
+                    viewModel.conversationState = .waitingForResponse
                     if success {
                         messageInputText = ""
                     }
@@ -284,8 +286,9 @@ struct ContentView: View {
         }
         .overlay(
             Group {
-                if viewModel.isLoading {
-                    LoadingOverlay()
+                if viewModel.shouldShowLoading {
+                    LoadingOverlay(conversationState: viewModel.conversationState)
+                        .zIndex(100)
                 }
             }
         )
@@ -309,6 +312,28 @@ struct ContentView: View {
                         default:
                             EmptyView()
                         }
+                    }
+                    .onChange(of: viewModel.isLoading) { _ in
+                        // Force view refresh when loading state changes
+                        withAnimation {
+                            scrollView.scrollTo(observeableConversationData.conversationEntries.last?.identifier, anchor: .bottom)
+                        }
+                    }
+                    
+                    // Show loading indicator when waiting for response
+                    if viewModel.isWaitingForResponse {
+                        HStack {
+                            Text("Loading...")
+                                .font(.system(size: 16))
+                                .foregroundColor(.white.opacity(0.7))
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 12)
+                                .background(Color.gray.opacity(0.3))
+                                .clipShape(RoundedRectangle(cornerRadius: 20))
+                            Spacer()
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 4)
                     }
                 }
                 .padding(.vertical, 12)
@@ -435,14 +460,36 @@ extension View {
 }
 
 struct LoadingOverlay: View {
+    let conversationState: MessagingViewModel.ConversationState
+    
     var body: some View {
         ZStack {
-            Color.black.opacity(0.4)
+            Color.black.opacity(0.7)
                 .edgesIgnoringSafeArea(.all)
             
-            ProgressView()
-                .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                .scaleEffect(1.5)
+            VStack(spacing: 20) {
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                    .scaleEffect(1.5)
+                
+                Text(stateMessage)
+                    .font(.headline)
+                    .foregroundColor(.white)
+            }
+        }
+        .zIndex(100)
+    }
+    
+    private var stateMessage: String {
+        switch conversationState {
+        case .typing:
+            return "Agent is typing..."
+        case .loading, .fetchingConversation:
+            return "Loading..."
+        case .waitingForResponse:
+            return "Waiting for response..."
+        default:
+            return "Loading..."
         }
     }
 }

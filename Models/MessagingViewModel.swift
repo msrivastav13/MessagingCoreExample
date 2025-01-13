@@ -9,9 +9,38 @@ import SwiftUI
 
 public class MessagingViewModel: NSObject, ObservableObject, ConversationClientDelegate {
 
+    // Define the conversation state enum
+    public enum ConversationState {
+        case idle
+        case loading
+        case fetchingConversation
+        case waitingForResponse
+        case typing
+    }
+    
+    // Replace multiple boolean states with a single state property
+    @Published var conversationState: ConversationState = .idle
+    
+    // Computed properties to maintain compatibility with existing code
+    var isLoading: Bool {
+        conversationState == .loading
+    }
+    
+    var isFetchingConversation: Bool {
+        conversationState == .fetchingConversation
+    }
+    
+    var isWaitingForResponse: Bool {
+        conversationState == .waitingForResponse
+    }
+    
+    var isTyping: Bool {
+        conversationState == .typing
+    }
+    
     // Conversation client object
     @Published var conversationClient: ConversationClient?
-
+    
     // This code uses a random UUID for the conversation ID, but
     // be sure to use the same ID if you want to continue the
     // same conversation after a restart.
@@ -23,7 +52,10 @@ public class MessagingViewModel: NSObject, ObservableObject, ConversationClientD
     // Contains all the conversation entries
     @Published var observeableConversationData: ObserveableConversationEntries?
 
-    @Published var isLoading: Bool = false
+    // Computed property to determine if we should show loading
+    var shouldShowLoading: Bool {
+        return isLoading && !isTyping // Only show loading overlay when not typing
+    }
 
     init(observeableConversationData: ObserveableConversationEntries) {
         super.init()
@@ -40,25 +72,30 @@ public class MessagingViewModel: NSObject, ObservableObject, ConversationClientD
 
     /// Fetches all the conversation entries and updates the view.
     public func fetchAndUpdateConversation() {
+        self.conversationState = .fetchingConversation
         retrieveAllConversationEntries(completion: { messages in
-            if let messages = messages {
-                DispatchQueue.main.async {
+            DispatchQueue.main.async {
+                if let messages = messages {
                     self.observeableConversationData?.conversationEntries = []
-                    // Sort messages by timestamp before adding them
                     let sortedMessages = messages.sorted { $0.timestamp < $1.timestamp }
                     for message in sortedMessages {
                         self.observeableConversationData?.conversationEntries.append(message)
                     }
                 }
+                // Clear all states
+                self.conversationState = .idle
             }
         })
     }
 
     public func sendTextMessage(message: String, completion: @escaping (Bool) -> Void) {
+        updateConversationState(.loading)
+        updateConversationState(.waitingForResponse)
+        
         conversationClient?.send(message: message)
-        DispatchQueue.main.async {
-            completion(true)
-        }
+        
+        // Clear the message input immediately after sending
+        completion(true)
     }
 
     /// Sends an image to the agent.
@@ -197,8 +234,10 @@ public class MessagingViewModel: NSObject, ObservableObject, ConversationClientD
         // Handle error messages from the SDK
         coreClient?.addDelegate(delegate: self)
 
-        // Create the conversation client
-        conversationClient = coreClient?.conversationClient(with: self.conversationID)
+        // Update the conversation client assignment to use main thread
+        DispatchQueue.main.async {
+            self.conversationClient = self.coreClient?.conversationClient(with: self.conversationID)
+        }
 
         // Retrieve and submit any PreChat fields
         getRemoteConfig(completion: { preChatFields in
@@ -245,5 +284,12 @@ public class MessagingViewModel: NSObject, ObservableObject, ConversationClientD
         #if DEBUG
             Logging.level = .debug
         #endif
+    }
+
+    /// Add a method to update state
+    public func updateConversationState(_ newState: ConversationState) {
+        DispatchQueue.main.async {
+            self.conversationState = newState
+        }
     }
 }
