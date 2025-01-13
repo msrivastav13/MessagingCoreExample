@@ -274,10 +274,6 @@ struct ContentView: View {
                     .background(Color.white)
                 }
             }
-            
-            if viewModel.isLoading || viewModel.isWaitingForConversationConfirmation {
-                LoadingSpinnerView()
-            }
         }
     }
 
@@ -299,6 +295,10 @@ struct ContentView: View {
                         default:
                             EmptyView()
                         }
+                    }
+                    
+                    if viewModel.isLoading || viewModel.isWaitingForConversationConfirmation {
+                        LoadingSpinnerView()
                     }
                 }
                 .padding(.vertical, 12)
@@ -394,31 +394,54 @@ struct ContentView: View {
     }
 
     struct LoadingSpinnerView: View {
-        @State private var dots = ""
-        let timer = Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()
+        let dots = "....."  // Static dots
+        @State private var isAnimating = false
         
         var body: some View {
-            ZStack {
-                Color.black.opacity(0.4)
-                    .edgesIgnoringSafeArea(.all)
-                
-                Text(dots.map { _ in "." }.joined())
-                    .foregroundColor(.white)
-                    .font(.system(size: 32, weight: .bold))
-                    .tracking(8)
-                    .frame(width: 100, height: 40)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color(red: 0.45, green: 0.12, blue: 0.38).opacity(0.95))
-                    )
-                    .onReceive(timer) { _ in
-                        if dots.count >= 3 {
-                            dots = ""
-                        } else {
-                            dots += " "
-                        }
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(dots)
+                            .foregroundColor(Color.black.opacity(0.85))
+                            .font(.system(size: 24, weight: .regular))
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 12)
+                            .background(Color.white.opacity(0.9))
+                            .clipShape(RoundedRectangle(cornerRadius: 20))
+                            .shadow(color: Color.black.opacity(0.1), radius: 3, x: 0, y: 2)
+                            .modifier(ShakeEffect(shakes: isAnimating ? 2 : 0))
+                            .onAppear {
+                                withAnimation(
+                                    Animation.easeInOut(duration: 1.5)
+                                        .repeatForever(autoreverses: false)
+                                ) {
+                                    isAnimating = true
+                                }
+                            }
+                        
+                        TimeStampView(date: Date())
+                            .padding(.horizontal, 8)
                     }
+                    
+                    Spacer()
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 4)
             }
+        }
+    }
+
+    struct ShakeEffect: GeometryEffect {
+        var shakes: CGFloat = 0
+        
+        var animatableData: CGFloat {
+            get { shakes }
+            set { shakes = newValue }
+        }
+        
+        func effectValue(size: CGSize) -> ProjectionTransform {
+            let translation = sin(shakes * .pi * 2) * 3
+            return ProjectionTransform(CGAffineTransform(translationX: translation, y: 0))
         }
     }
 }
