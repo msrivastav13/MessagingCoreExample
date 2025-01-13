@@ -111,14 +111,6 @@ struct ContentView: View {
                 .padding(.bottom, 30)
             }
         }
-        .overlay(
-            Group {
-                if viewModel.shouldShowLoading {
-                    LoadingOverlay(conversationState: viewModel.conversationState)
-                        .zIndex(100)
-                }
-            }
-        )
     }
 
     // Activity Card View
@@ -236,62 +228,57 @@ struct ContentView: View {
                         })
                     }
                 
-                // Message input area
-               VStack(spacing: 12) {
-    HStack {
-        TextField("Type a Message", text: $messageInputText)
-            .textFieldStyle(RoundedBorderTextFieldStyle())
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(Color.white)
-            .cornerRadius(20)
-        
-        // Voice input button
-        Button(action: {
-            if speechRecognizer.isRecording {
-                speechRecognizer.stopRecording()
-            } else {
-                speechRecognizer.startRecording { recognizedText in
-                    messageInputText = recognizedText
-                }
-            }
-        }) {
-            Image(systemName: speechRecognizer.isRecording ? "stop.circle.fill" : "mic.circle.fill")
-                .font(.system(size: 32))
-                .foregroundColor(speechRecognizer.isRecording ? .red : .white)
-        }
-        
-        Button(action: {
-            guard !messageInputText.isEmpty else { return }
-            viewModel.sendTextMessage(message: messageInputText) { success in
-                DispatchQueue.main.async {
-                    viewModel.conversationState = .waitingForResponse
-                    if success {
-                        messageInputText = ""
+                // Add this input box section at the bottom
+                VStack(spacing: 0) {
+                    Divider()
+                    HStack(spacing: 12) {
+                        // Text input field
+                        TextField("Type your message...", text: $messageInputText)
+                            .padding(12)
+                            .background(Color.white)
+                            .cornerRadius(20)
+                            .shadow(color: Color.black.opacity(0.1), radius: 3)
+                        
+                        // Speech button
+                        Button(action: {
+                            if speechRecognizer.isRecording {
+                                speechRecognizer.stopRecording()
+                            } else {
+                                speechRecognizer.startRecording { recognizedText in
+                                    messageInputText = recognizedText
+                                }
+                            }
+                        }) {
+                            Image(systemName: speechRecognizer.isRecording ? "stop.circle.fill" : "mic.circle.fill")
+                                .font(.system(size: 32))
+                                .foregroundColor(Color(red: 0.45, green: 0.12, blue: 0.38))
+                        }
+                        
+                        // Send button
+                        Button(action: {
+                            guard !messageInputText.isEmpty else { return }
+                            viewModel.sendTextMessage(message: messageInputText) { success in
+                                if success {
+                                    messageInputText = ""
+                                }
+                            }
+                        }) {
+                            Image(systemName: "arrow.up.circle.fill")
+                                .font(.system(size: 32))
+                                .foregroundColor(Color(red: 0.45, green: 0.12, blue: 0.38))
+                        }
+                        .disabled(messageInputText.isEmpty)
                     }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(Color.white)
                 }
             }
-        }) {
-            Image(systemName: "arrow.up.circle.fill")
-                .font(.system(size: 32))
-                .foregroundColor(.white)
-        }
-        .disabled(messageInputText.isEmpty)
-    }
-    .padding(.horizontal)
-}
-                .padding(.vertical, 8)
-                .background(Color(red: 0.45, green: 0.12, blue: 0.38).opacity(0.9))
+            
+            if viewModel.isLoading || viewModel.isWaitingForConversationConfirmation {
+                LoadingSpinnerView()
             }
         }
-        .overlay(
-            Group {
-                if viewModel.shouldShowLoading {
-                    LoadingOverlay(conversationState: viewModel.conversationState)
-                        .zIndex(100)
-                }
-            }
-        )
     }
 
     private var ChatFeedList: some View {
@@ -312,28 +299,6 @@ struct ContentView: View {
                         default:
                             EmptyView()
                         }
-                    }
-                    .onChange(of: viewModel.isLoading) { _ in
-                        // Force view refresh when loading state changes
-                        withAnimation {
-                            scrollView.scrollTo(observeableConversationData.conversationEntries.last?.identifier, anchor: .bottom)
-                        }
-                    }
-                    
-                    // Show loading indicator when waiting for response
-                    if viewModel.isWaitingForResponse {
-                        HStack {
-                            Text("Loading...")
-                                .font(.system(size: 16))
-                                .foregroundColor(.white.opacity(0.7))
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 12)
-                                .background(Color.gray.opacity(0.3))
-                                .clipShape(RoundedRectangle(cornerRadius: 20))
-                            Spacer()
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 4)
                     }
                 }
                 .padding(.vertical, 12)
@@ -427,6 +392,35 @@ struct ContentView: View {
             return formatter.string(from: date)
         }
     }
+
+    struct LoadingSpinnerView: View {
+        @State private var dots = ""
+        let timer = Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()
+        
+        var body: some View {
+            ZStack {
+                Color.black.opacity(0.4)
+                    .edgesIgnoringSafeArea(.all)
+                
+                Text(dots.map { _ in "." }.joined())
+                    .foregroundColor(.white)
+                    .font(.system(size: 32, weight: .bold))
+                    .tracking(8)
+                    .frame(width: 100, height: 40)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(red: 0.45, green: 0.12, blue: 0.38).opacity(0.95))
+                    )
+                    .onReceive(timer) { _ in
+                        if dots.count >= 3 {
+                            dots = ""
+                        } else {
+                            dots += " "
+                        }
+                    }
+            }
+        }
+    }
 }
 
 struct ContentView_Previews: PreviewProvider {
@@ -458,39 +452,3 @@ extension View {
         }
     }
 }
-
-struct LoadingOverlay: View {
-    let conversationState: MessagingViewModel.ConversationState
-    
-    var body: some View {
-        ZStack {
-            Color.black.opacity(0.7)
-                .edgesIgnoringSafeArea(.all)
-            
-            VStack(spacing: 20) {
-                ProgressView()
-                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                    .scaleEffect(1.5)
-                
-                Text(stateMessage)
-                    .font(.headline)
-                    .foregroundColor(.white)
-            }
-        }
-        .zIndex(100)
-    }
-    
-    private var stateMessage: String {
-        switch conversationState {
-        case .typing:
-            return "Agent is typing..."
-        case .loading, .fetchingConversation:
-            return "Loading..."
-        case .waitingForResponse:
-            return "Waiting for response..."
-        default:
-            return "Loading..."
-        }
-    }
-}
-

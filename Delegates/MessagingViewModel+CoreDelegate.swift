@@ -20,35 +20,29 @@ extension MessagingViewModel: CoreDelegate {
                      paged: Bool) {
         guard conversation.identifier == self.conversationID else { return }
         
-        updateConversationState(.loading)
         DispatchQueue.main.async {
             for entry in entries {
                 self.observeableConversationData?.conversationEntries.append(entry)
             }
+            self.isWaitingForConversationConfirmation = false
         }
-        updateConversationState(.idle)
     }
 
     /// Message status has changed.
     public func core(_ core: CoreClient,
                      conversation: Conversation,
                      didUpdateEntries entries: [ConversationEntry]) {
+        guard conversation.identifier == self.conversationID else { return }
         print("didUpdateEntries")
+        DispatchQueue.main.async {
+            self.isWaitingForConversationConfirmation = true
+        }
     }
 
     /// Conversation was created.
     public func core(_ core: CoreClient, didCreateConversation conversation: Conversation) {
+        guard conversation.identifier == self.conversationID else { return }
         print("didCreateConversation")
-    }
-
-    /// Received a started typing event.
-    public func core(_ core: CoreClient, didReceiveTypingStartedEvent event: ConversationEntry) {
-        updateConversationState(.typing)
-    }
-
-    /// Received a stopped typing event.
-    public func core(_ core: CoreClient, didReceiveTypingStoppedEvent event: ConversationEntry) {
-        updateConversationState(.idle)
     }
 
     /// Network status has changed.
